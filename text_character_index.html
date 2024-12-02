@@ -1,0 +1,1783 @@
+<!DOCTYPE html>
+<html>
+<head></head>
+<body>
+
+<h1>Text Character prediction webapp</h1>
+<ol type="A">
+	<li>(Optional) Enter the number of epochs to train the model (default=500).</li>
+	<li>Select a model definition, to perform alphabet character prediction.</li>
+	<li>Wait for the model to train, via the progress bar.</li>
+	<li>View the model loss and accuracy for the training data.</li>
+</ol>
+
+<!-- ---------------------------------------- -->
+<!-- View two split window -->
+<div align="left">
+<table style='text-align: left; width: 500px; display:block'>
+<tr>
+
+<th id="char_prediction_input">
+
+<h2>[Step 0] (Optional) Enter the number of epochs to train the model (default=500).</h2>
+	
+<input id="epochs" type="text" value="" placeholder="epochs" rows="10" cols="100" style="display:block; text-align: left; width: 600px;">
+
+<br><br>
+
+<h2>[Step 1] Select a model definition.</h2>
+  
+<h3>Model definition: LSTM - DENSE</h3>
+<button id="run_LSTM_char_prediction0" onclick="run_LSTM_char_prediction0()">(accuracy=0.5, epochs=1000) Run LSTM character prediction: 1 layer LSTM - 2 Dense layers</button>
+<button id="run_LSTM_char_prediction1" onclick="run_LSTM_char_prediction1()">(accuracy=0.36, epochs=500) Run LSTM character prediction: 1 layer LSTM - 3 Dense layers</button>
+
+<h3>Model definition: Stacked LSTMs (2, 3, 4)</h3>
+<button id="run_LSTM_char_prediction2" onclick="run_LSTM_char_prediction2()">(accuracy=0.69, epochs=500) Run LSTM character prediction: 2 layer LSTM - 1 Dense layer</button>
+<button id="run_LSTM_char_prediction3" onclick="run_LSTM_char_prediction3()">(accuracy=0.78, epochs=700) Run LSTM character prediction: 3 layer LSTM - 1 Dense layer</button>
+<button id="run_LSTM_char_prediction4" onclick="run_LSTM_char_prediction4()">(accuracy=0.7, epochs=500) Run LSTM character prediction: 4 layer LSTM - 1 Dense layer</button>
+
+<h3>Model definition: Bidirectional LSTMs</h3>
+<button id="run_LSTM_char_prediction5" onclick="run_LSTM_char_prediction5()">(accuracy=0.55, epochs=700) Run LSTM character prediction: 1 Bidirectional LSTM layer - 2 Dense layers</button>
+<button id="run_LSTM_char_prediction6" onclick="run_LSTM_char_prediction6()">(accuracy=0.37, epochs=500) Run LSTM character prediction: 2 Bidirectional LSTM layer - 1 Dense layers</button>
+
+
+
+<!-- ---------------------------------------- -->
+
+<th id="char_prediction_output">
+<h2>[Step 2] View Results.</h2>
+<progress id="progress_bar" max="100" value="0" style="display:none">0%</progress>
+<br><br>
+<div id="data_display" style="display:block; text-align: left; width: 600px; height: 600px">
+<br>
+<div id="notification"></div>
+<br>
+<div id="error"></div>
+</th>
+	
+</tr>
+</table>
+</div>  
+<!-- ---------------------------------------- -->
+
+
+
+<!-- ---------------------------------------- -->
+<!-- CSS -->
+<style>
+div { padding: 10px; display:block; font-family:courier; font-size:15px; }
+div#notification { position: relative; color: #3236a8; }
+div#error { position: relative; color: #bd1f17; }
+
+table {vertical-align: top; border-collapse: collapse; position: relative; z-index: 0; border: 0px solid black;}
+
+tr {vertical-align: top; border: 0px solid black; padding: 30px 30px; }
+
+th, td {vertical-align: top; border: 0px solid black; padding: 10px; }
+th#char_prediction_input {width: 100%; }
+th#char_prediction_output {width: 100%; }
+
+div#data_display {position: absolute; vertical-align: top; top: 200; z-index: 200; }
+</style>
+
+<!-- ---------------------------------------- -->
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+
+<script src="https://cdn.plot.ly/plotly-2.30.0.min.js" charset="utf-8"></script>
+
+<!-- ---------------------------------------- -->
+	
+<script>
+	
+// -----------------------------------------------
+	
+window.addEventListener('beforeunload', function() {
+	window.location.href = window.location.href + '?nocache=' + new Date().getTime();
+});
+
+// -----------------------------------------------
+
+
+
+var timesteps = 0;
+var num_of_features = 0;
+var batch_size = 0;
+var batch_size_test = 0;
+var num_of_outputs = 0;
+var lstmModel = [];
+var epochs = 500;
+var obj = {}; 
+
+
+async function run_LSTM_char_prediction0() {
+	
+	// Organize xs and ys
+	const {xs_train_tf, ys_train_tf, xs_test_js} = await create_xs_ys();
+  
+	// Create the model
+	const lstmModel = await modelDefinition0_prediction_per_timestep();
+
+	// Compile, fit, and predict
+	await compile_train_predict_lstm(xs_train_tf, ys_train_tf, xs_test_js, lstmModel);
+}
+
+async function run_LSTM_char_prediction1() {
+	
+	// Organize xs and ys
+	const {xs_train_tf, ys_train_tf, xs_test_js} = await create_xs_ys();
+  
+	// Create the model
+	const lstmModel = await modelDefinition1_prediction_per_timestep();
+
+	// Compile, fit, and predict
+	await compile_train_predict_lstm(xs_train_tf, ys_train_tf, xs_test_js, lstmModel);
+}
+	
+
+
+async function run_LSTM_char_prediction2() {
+	
+	// Organize xs and ys
+	const {xs_train_tf, ys_train_tf, xs_test_js} = await create_xs_ys();
+  
+	// Create the model
+	const lstmModel = await modelDefinition2_prediction_per_timestep();
+
+	// Compile, fit, and predict
+	await compile_train_predict_lstm(xs_train_tf, ys_train_tf, xs_test_js, lstmModel);
+}
+	
+
+
+async function run_LSTM_char_prediction3() {
+	
+	// Organize xs and ys
+	const {xs_train_tf, ys_train_tf, xs_test_js} = await create_xs_ys();
+  
+	// Create the model
+	const lstmModel = await modelDefinition3_prediction_per_timestep();
+
+	// Compile, fit, and predict
+	await compile_train_predict_lstm(xs_train_tf, ys_train_tf, xs_test_js, lstmModel);
+}
+
+
+async function run_LSTM_char_prediction4() {
+	
+	// Organize xs and ys
+	const {xs_train_tf, ys_train_tf, xs_test_js} = await create_xs_ys();
+  
+	// Create the model
+	const lstmModel = await modelDefinition4_prediction_per_timestep();
+
+	// Compile, fit, and predict
+	await compile_train_predict_lstm(xs_train_tf, ys_train_tf, xs_test_js, lstmModel);
+}
+	
+	
+
+async function run_LSTM_char_prediction5() {
+	
+	// Organize xs and ys
+	const {xs_train_tf, ys_train_tf, xs_test_js} = await create_xs_ys();
+  
+	// Create the model
+	const lstmModel = await modelDefinition5_prediction_per_timestep();
+
+	// Compile, fit, and predict
+	await compile_train_predict_lstm(xs_train_tf, ys_train_tf, xs_test_js, lstmModel);
+}
+
+
+async function run_LSTM_char_prediction6() {
+	
+	// Organize xs and ys
+	const {xs_train_tf, ys_train_tf, xs_test_js} = await create_xs_ys();
+  
+	// Create the model
+	const lstmModel = await modelDefinition6_prediction_per_timestep();
+
+	// Compile, fit, and predict
+	await compile_train_predict_lstm(xs_train_tf, ys_train_tf, xs_test_js, lstmModel);
+}
+
+
+	
+	
+async function create_xs_ys() {
+	
+	var letters_org_arr = ["ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
+	var letters_org_str = letters_org_arr[0];
+
+	// The number of times to shift each character. 
+	// We need to at least shift each character 26 times, so that the model can see all possible combinations of xs with respect to ys.
+	const length_letters_org = letters_org_str.length;
+	console.log('length_letters_org: ', length_letters_org);
+	
+	// Augment the amount of training data
+	var letters = [];
+	for (var i=0; i<length_letters_org; i++){
+	    	// Way 0: repeating the letters
+		// letters = letters.concat(letters_org_arr);
+
+		// Way 1: repeating with a shift to right
+		// "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		// "ZABCDEFGHIJKLMNOPQRSTUVWXY"
+		// "YZABCDEFGHIJKLMNOPQRSTUVWX"
+		// var first = letters_org_str.slice(letters_org_str.length-i, letters_org_str.length);
+		// var second = letters_org_str.slice(0, letters_org_str.length-i);
+		// var letters_org_shift = first+second;
+		// letters = letters.concat([letters_org_shift]);
+
+		// Way 2: repeating with a shift to left (seems more logical)
+		// "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		// "BCDEFGHIJKLMNOPQRSTUVWXYZA"
+		// "CDEFGHIJKLMNOPQRSTUVWXYZAB"
+		var first = letters_org_str.slice(0, i);
+		var second = letters_org_str.slice(i, letters_org_str.length);
+		var letters_org_shift = second+first;
+		letters = letters.concat([letters_org_shift]);
+	}
+
+	// -------------------------
+	
+	// Augment the letters
+	letters = letters.concat(letters);
+	letters = letters.concat(letters);
+
+	// -------------------------
+	
+	var letters_str = letters.join('');
+	console.log('letters_str: ', letters_str);
+	console.log('letters_str.length: ', letters_str.length);
+	
+	// -------------------------
+	
+	// Tokenizer: from 1 to 26, 0=<oov>
+	var arr = letters_org_str.split("");
+	console.log('arr: ', arr);
+	
+	obj = Object.fromEntries(arr.map((key, index) => { return [key, index+1]; }));
+	console.log('obj: ', obj);
+	
+	// -------------------------
+	
+	const xs_1d_arr = letters_str.split("").map((val, ind) => { return obj[val] ?? 0; });
+	console.log('xs_1d_arr: ', xs_1d_arr);
+	
+	console.log('xs_1d_arr.length: ', xs_1d_arr.length);
+
+	// var shap = await shape(xs_1d_arr);
+	// console.log('Shape xs_1d_arr: ', shap);
+	// Array [ 260 ]
+	
+	// -------------------------
+
+	// Make array 2d to account for the number of features
+	// Create xs_2d_arr : [num_of_features=1, num_of_datapoints=260]
+	var xs_2d_arr =  [xs_1d_arr];
+	
+	var shap = await shape(xs_2d_arr);
+	console.log('Shape xs_2d_arr: ', shap);
+
+	// -------------------------
+	
+	// Calculate [batch_size, timestep, num_of_features] to separate X and Y
+	timesteps = 26;  // 2=if [one xs] to predict [one ys], 26=if [25 xs] to predict [one ys] 
+	console.log('timesteps: ', timesteps);
+	
+	num_of_features = xs_2d_arr.length;  // num_of_features_OR_colnum
+	console.log('num_of_features: ', num_of_features);
+
+	batch_size = Math.floor(xs_2d_arr[0].length / timesteps);
+	console.log('batch_size: ', batch_size);
+
+	// -------------------------------------------------
+	
+	var xs_3d_train = [];
+	var ys_2d_train = [];
+	var xs_3d_test = [];
+
+	// The number of batch_size to keep for testing the model
+	batch_size_test = Math.floor(batch_size*0.05);
+	console.log("batch_size_test: ", batch_size_test);
+	
+	for (var feats=0; feats<num_of_features; feats++) {
+		// for the organization, features are rows
+		var temp_datappoints_arr = xs_2d_arr.at(feats);
+		console.log("temp_datappoints_arr: ", temp_datappoints_arr);
+
+		// cut temp_datappoints_arr into X and Y, every timesteps
+		var x_temp = [];
+		var y_temp = [];
+		var x_temp_test = [];
+
+		// loop over the data by batch_size, to cut the data by [batch_size] number of [timesteps] 
+		for (var num_of_desired_predictions=0; num_of_desired_predictions<batch_size; num_of_desired_predictions++) {
+			var st = num_of_desired_predictions * timesteps;
+			var stop = st + timesteps;
+			
+			// Separate train and test data
+			if (num_of_desired_predictions > batch_size-batch_size_test-1) {
+				// Test data set
+				x_temp_test.push(temp_datappoints_arr.slice(st, stop-1));
+			} else {
+				// Train data set
+				x_temp.push(temp_datappoints_arr.slice(st, stop-1)); // from [0-24th] value
+				y_temp.push(temp_datappoints_arr.at(stop-1));  // returns the 25th value
+				
+				if (num_of_desired_predictions == 0) {
+					console.log("x_temp: ", x_temp);
+					console.log("y_temp: ", y_temp);
+				}
+			}
+		}
+		xs_3d_train.push(x_temp);
+		ys_2d_train.push(y_temp);
+		
+		xs_3d_test.push(x_temp_test);
+	}
+	
+	// Train shape1
+	shap = await shape(xs_3d_train);  
+	console.log('Shape xs_3d_train: ', shap);  // [num_of_features, batch_size, timesteps] = [ 1, 129, 1 ]
+
+	shap = await shape(ys_2d_train);
+	console.log('Shape ys_2d_train: ', shap); // [num_of_features, batch_size] = [ 1, 129 ]
+
+	// -------------------------------------------------
+
+	// Test shape1
+	shap = await shape(xs_3d_test);  
+	console.log('Shape xs_3d_test: ', shap);  // [num_of_features, batch_size, timesteps] = [ 1, 1, 1 ]
+
+	// -------------------------------------------------
+
+	// Update timesteps, timesteps should be 1 less due to assigning the last datapoint to Y.
+	timesteps = timesteps - 1;
+	console.log('timesteps: ', timesteps);	// 1
+
+	// Recalculate batch_size train, taking into account batch_size_test that was not included in xs_train
+	batch_size = batch_size - batch_size_test;
+	console.log('batch_size: ', batch_size);	// 129
+	
+	// -------------------------------------------------
+	
+	// Put X_3d_test_shape1 [num_of_features, batch_size, timesteps]=[0,1,2] into [batch_size, timesteps, num_of_features]=[1,2,0]
+	
+	var xs_3d_arr = await exchange_3d_dimensions(xs_3d_train, [1,2,0]);
+
+	// Train shape
+	shap = await shape(xs_3d_arr);  
+	console.log('Shape xs_3d_arr: ', shap);		// [batch_size, timesteps, num_of_features] = [ 129, 1, 1 ]
+
+	var xs_train_tf = await tf.tensor(xs_3d_arr);
+	console.log('Tensorflow tensor (X train) - xs_train_tf: ', xs_train_tf);
+	
+	// -------------------------------------------------
+
+	var xs_test_3d_jsArr = await exchange_3d_dimensions(xs_3d_test, [1,2,0]);
+
+	// Test shape
+	shap = await shape(xs_test_3d_jsArr);  
+	console.log('Shape xs_test_3d_jsArr: ', shap);	// [batch_size_test, timesteps, num_of_features] = [ 1, 1, 1 ]
+	
+	// -------------------------------------------------
+	
+	// Assign Y to a 1D tensor
+	console.log('ys_2d_train: ', ys_2d_train);	// [num_of_features, batch_size] = [ 1, 129 ]
+
+	// So, need to stack [batch_size] per [feature]
+	var ys_2d_arr = [];
+	for (var i=0; i<num_of_features; i++) { 
+		ys_2d_arr = ys_2d_arr.concat(ys_2d_train[i]); 
+	}
+
+	// flatten the 2D tensor as a 1Dtensor
+	var ys_1d_arr = await tf.tensor2d(ys_2d_arr, [ys_2d_arr.length, 1], 'int32').flatten();  
+	console.log('Tensorflow tensor (Y train) - ys_1d_arr: ', ys_1d_arr);
+	
+	// Test shape
+	shap = await shape(ys_1d_arr);  
+	console.log('Shape ys_1d_arr: ', shap);
+
+	num_of_outputs = length_letters_org;    // 26
+	var ys_train_tf = tf.oneHot(ys_1d_arr, num_of_outputs);  // Array [260, 26]
+	console.log('ys_train_tf oneHot: ', ys_train_tf);
+
+	// -------------------------------------------------
+	
+	return {xs_train_tf: xs_train_tf, ys_train_tf: ys_train_tf, xs_test_js: xs_test_3d_jsArr};
+}
+
+
+	
+
+
+// LSTM and DENSE LAYERS
+
+// -----------------------------------------------
+// [1a] model outline: case 1
+// -----------------------------------------------
+async function modelDefinition0_prediction_per_timestep() {
+
+	// Input layer
+	const input = tf.input({batchShape: [batch_size, timesteps, num_of_features]});
+	console.log("input: ", input.name);
+	
+	console.log("Input: ", JSON.stringify(input.shape));
+	// [129=batch_size, 1=timesteps, 1=num_of_features]
+
+	// -----------------------
+
+	// LSTM layer
+	var n_a = 2*timesteps; // timesteps;  // 1
+	const lstm = tf.layers.lstm({
+		recurrentActivation: 'hardSigmoid',
+		units: n_a,
+    
+		// receive a prediction per timestep
+		returnSequences: false,
+
+		// do not return the a and c matricies
+		returnState: false,
+		kernelInitializer: 'heNormal',
+
+		// batchSize = batch_size gives Input - LSTM:  [129,129]
+		batchSize: batch_size,
+		inputShape: [timesteps, num_of_features],
+		stateful: false,
+		// If stateful=true it gives Error: Input 0 is incompatible with layer lstm_LSTM1: expected shape=168,,1, found shape=32,3,1.
+		activation: 'tanh',
+		trainable: true,
+		dropout: 0.2
+	});
+	
+	// Apply lstm layer to the model
+	const input_lstm = lstm.apply(input);
+	console.log("input_lstm: ", input_lstm.name);
+	
+	console.log("Input - LSTM: ", JSON.stringify(input_lstm.shape)); 
+	// Input - LSTM: [m=batch_size=129, n_y=units=num_of_lstm_outpus=1] 
+	
+	// This size is the shape of y_total_forward_pass per timestep
+
+	// y_hat<t>_(n_y, batch_size)
+
+	// -----------------------
+	
+	// Dense layer
+	// const denseLayer1 = tf.layers.dense({units: num_of_outputs, inputShape: [timesteps, num_of_features]});
+	const denseLayer1 = tf.layers.dense({units: 40, activation: "relu"});
+	console.log("denseLayer1: ", denseLayer1.name);
+
+	// Apply dense layer to the model
+	const input_lstm_dense = denseLayer1.apply(input_lstm);
+	console.log("Input - LSTM - Dense: ", JSON.stringify(input_lstm_dense.shape));
+	// Input - LSTM - Dense:  [129=batch_size, dense_layer_output=units=1] 
+	
+	// this size is the shape of y_dense per timestep
+	
+	// -----------------------
+	
+	// Dense layer
+	const denseLayer2 = tf.layers.dense({units: num_of_outputs, activation: "softmax"});
+	console.log("denseLayer2: ", denseLayer2.name);
+	
+	// Apply dense layer to the model
+	const input_lstm_dense_dense = denseLayer2.apply(input_lstm_dense);
+	console.log("Input - LSTM - Dense - Dense: ", JSON.stringify(input_lstm_dense_dense.shape)); 
+	// [batch_size=129, num_of_outputs=26]
+	
+	// this size is the shape of y_dense per timestep
+	
+	// so there are 129 batches and 26 results per batch
+	
+	// so there will be 129 results, where each result has 26 values
+	
+	// -----------------------
+	
+	lstmModel = await tf.model({inputs: input, outputs: input_lstm_dense_dense});
+	console.log('lstmModel: ', lstmModel);
+
+	// -----------------------
+	
+	return lstmModel;
+}
+
+// -----------------------------------------------
+
+
+
+// -----------------------------------------------
+// [1b] model outline: case 1
+// -----------------------------------------------
+async function modelDefinition1_prediction_per_timestep() {
+
+	// Input layer
+	const input = tf.input({batchShape: [batch_size, timesteps, num_of_features]});
+	console.log("input: ", input.name);
+	
+	console.log("Input: ", JSON.stringify(input.shape));
+	// [129=batch_size, 1=timesteps, 1=num_of_features]
+
+	// -----------------------
+
+	// LSTM layer
+	var n_a = 2*timesteps; // timesteps;  // 1
+
+	// This is not even needed for now, but this is how one would add it
+	var cells = [];
+	for (var i=0; i<timesteps; i++) {
+		cells.push( tf.layers.lstmCell({units: n_a}) );
+	}
+		
+	const lstm = tf.layers.lstm({
+		cells: cells,
+		recurrentActivation: 'hardSigmoid',
+		units: n_a,
+    
+		// receive a prediction per timestep
+		returnSequences: false,
+
+		// do not return the a and c matricies
+		returnState: false,
+		kernelInitializer: 'heNormal',
+
+		// batchSize = batch_size gives Input - LSTM:  [129,129]
+		batchSize: batch_size,
+		inputShape: [timesteps, num_of_features],
+		stateful: false,
+		// If stateful=true it gives Error: Input 0 is incompatible with layer lstm_LSTM1: expected shape=168,,1, found shape=32,3,1.
+		activation: 'tanh',
+		trainable: true,
+		dropout: 0.2
+	});
+	
+	// Apply lstm layer to the model
+	const input_lstm = lstm.apply(input);
+	console.log("input_lstm: ", input_lstm.name);
+	
+	console.log("Input - LSTM: ", JSON.stringify(input_lstm.shape)); 
+	// Input - LSTM: [m=batch_size=129, n_y=units=num_of_lstm_outpus=1] 
+	
+	// This size is the shape of y_total_forward_pass per timestep
+
+	// y_hat<t>_(n_y, batch_size)
+
+	// -----------------------
+	
+	// Dense layer
+	// const denseLayer1 = tf.layers.dense({units: num_of_outputs, inputShape: [timesteps, num_of_features]});
+	const denseLayer1 = tf.layers.dense({units: 42, activation: "relu"});
+	console.log("denseLayer1: ", denseLayer1.name);
+
+	// Apply dense layer to the model
+	const input_lstm_dense = denseLayer1.apply(input_lstm);
+	console.log("Input - LSTM - Dense: ", JSON.stringify(input_lstm_dense.shape));
+	// Input - LSTM - Dense:  [129=batch_size, dense_layer_output=units=1] 
+	
+	// this size is the shape of y_dense per timestep
+	
+	// -----------------------
+
+	// Dense layer
+	// const denseLayer2 = tf.layers.dense({units: num_of_outputs, inputShape: [timesteps, num_of_features]});
+	const denseLayer2 = tf.layers.dense({units: 36, activation: "relu"});
+	console.log("denseLayer2: ", denseLayer2.name);
+
+	// Apply dense layer to the model
+	const input_lstm_dense_dense = denseLayer2.apply(input_lstm_dense);
+	console.log("Input - LSTM - Dense - Dense: ", JSON.stringify(input_lstm_dense_dense.shape));
+	// Input - LSTM - Dense - Dense:  [129=batch_size, dense_layer_output=units=1] 
+	
+	// this size is the shape of y_dense per timestep
+	
+	// -----------------------
+	
+	// Dense layer
+	const denseLayer3 = tf.layers.dense({units: num_of_outputs, activation: "softmax"});
+	console.log("denseLayer3: ", denseLayer3.name);
+	
+	// Apply dense layer to the model
+	const input_lstm_dense_dense_dense = denseLayer3.apply(input_lstm_dense);
+	console.log("Input - LSTM - Dense - Dense - Dense: ", JSON.stringify(input_lstm_dense_dense_dense.shape)); 
+	// [batch_size=129, num_of_outputs=26]
+	
+	// this size is the shape of y_dense per timestep
+	
+	// so there are 129 batches and 26 results per batch
+	
+	// so there will be 129 results, where each result has 26 values
+	
+	// -----------------------
+	
+	lstmModel = await tf.model({inputs: input, outputs: input_lstm_dense_dense_dense});
+	console.log('lstmModel: ', lstmModel);
+
+	return lstmModel;
+}
+
+// -----------------------------------------------
+
+	
+
+
+// STACKING LSTMS
+
+// -----------------------------------------------
+// 2 LSTM layers
+// -----------------------------------------------
+async function modelDefinition2_prediction_per_timestep() {
+
+	// -----------------------
+	
+	var n_a = 58; // 72; // 120; 	// 96; // timesteps;  // 1
+	
+	// -----------------------
+	
+	// Input layer
+	const input = tf.input({batchShape: [batch_size, timesteps, num_of_features]});
+	console.log("input: ", input.name);
+	
+	console.log("Input: ", JSON.stringify(input.shape));
+	// [129=batch_size, 1=timesteps, 1=num_of_features]
+
+	// -----------------------
+
+	// LSTM layer 0
+	const lstm0 = tf.layers.lstm({
+		recurrentActivation: 'hardSigmoid',
+		units: n_a,
+    
+		// receive a prediction per datapoint
+		returnSequences: true,
+
+		// do not return the a and c matricies
+		returnState: false
+		,
+		kernelInitializer: 'heNormal',
+
+		// batchSize = batch_size gives Input - LSTM:  [129,129]
+		batchSize: batch_size,
+		inputShape: [timesteps, num_of_features],
+		stateful: false,
+		// If stateful=true it gives Error: Input 0 is incompatible with layer lstm_LSTM1: expected shape=168,,1, found shape=32,3,1.
+		activation: 'tanh',
+		trainable: true,
+		dropout: 0.2
+	});
+	
+	// Apply lstm layer to the model
+	const input_lstm0 = lstm0.apply(input);
+	console.log("input_lstm0: ", input_lstm0.name);
+	
+	console.log("Input - LSTM0: ", JSON.stringify(input_lstm0.shape)); 
+	// Input - LSTM0: [m=batch_size=129, n_y=units=num_of_lstm_outpus=1] 
+	
+	// This size is the shape of y_total_forward_pass per timestep
+
+	// y_hat<t>_(n_y, batch_size)
+
+	// -----------------------
+	
+	// LSTM layer 1
+	const lstm1 = tf.layers.lstm({
+		recurrentActivation: 'hardSigmoid',
+		units: n_a,
+    
+		// receive a prediction per timestep
+		returnSequences: false,
+
+		// do not return the a and c matricies
+		returnState: false,
+		
+		kernelInitializer: 'heNormal',
+
+		// batchSize = batch_size gives Input - LSTM:  [129,129]
+		batchSize: batch_size,
+		
+		//inputShape: [timesteps, num_of_features],
+		
+		stateful: false,
+		// If stateful=true 
+		
+		activation: 'tanh',
+		trainable: true,
+		dropout: 0.2
+	});
+	
+	// Apply lstm layer to the model
+	const input_lstm0_lstm1 = lstm1.apply(input_lstm0);
+	console.log("input_lstm0_lstm1: ", input_lstm0_lstm1.name);
+	
+	console.log("Input - LSTM0 - LSTM1: ", JSON.stringify(input_lstm0_lstm1.shape)); 
+	// Input - LSTM: [m=batch_size=129, n_y=units=num_of_lstm_outpus=1] 
+	
+	// This size is the shape of y_total_forward_pass per timestep
+
+	// y_hat<t>_(n_y, batch_size)
+	
+	// -----------------------
+	
+	// Dense layer
+	const denseLayer2 = tf.layers.dense({units: num_of_outputs, activation: "softmax"});
+	console.log("denseLayer2: ", denseLayer2.name);
+	
+	// Apply dense layer to the model
+	const input_lstm0_lstm1_dense = denseLayer2.apply(input_lstm0_lstm1);
+	console.log("Input - LSTM0 - LSTM1 - Dense: ", JSON.stringify(input_lstm0_lstm1_dense.shape)); 
+	// [batch_size=129, num_of_outputs=26]
+	
+	// this size is the shape of y_dense per timestep
+	
+	// so there are 129 batches and 26 results per batch
+	
+	// so there will be 129 results, where each result has 26 values
+	
+	// -----------------------
+	
+	lstmModel = await tf.model({inputs: input, outputs: input_lstm0_lstm1_dense});
+	console.log('lstmModel: ', lstmModel);
+
+	// -----------------------
+	
+	return lstmModel;
+}
+
+// -----------------------------------------------
+
+
+	
+// -----------------------------------------------
+// [1c] 3 LSTM layers
+// -----------------------------------------------
+async function modelDefinition3_prediction_per_timestep() {
+
+	// -----------------------
+	
+	var n_a = 2*timesteps; // 72; // 120; 	// 96; // timesteps;  // 1
+	
+	// -----------------------
+	
+	// Input layer
+	const input = tf.input({batchShape: [batch_size, timesteps, num_of_features]});
+	console.log("input: ", input.name);
+	
+	console.log("Input: ", JSON.stringify(input.shape));
+	// [129=batch_size, 1=timesteps, 1=num_of_features]
+
+	// -----------------------
+
+	// LSTM layer 0
+	const lstm0 = tf.layers.lstm({
+		recurrentActivation: 'hardSigmoid',
+		units: n_a,
+    
+		// receive a prediction per datapoint
+		returnSequences: true,
+
+		// do not return the a and c matricies
+		returnState: false
+		,
+		kernelInitializer: 'heNormal',
+
+		// batchSize = batch_size gives Input - LSTM:  [129,129]
+		batchSize: batch_size,
+		inputShape: [timesteps, num_of_features],
+		stateful: false,
+		// If stateful=true it gives Error: Input 0 is incompatible with layer lstm_LSTM1: expected shape=168,,1, found shape=32,3,1.
+		activation: 'tanh',
+		trainable: true,
+		dropout: 0.2
+	});
+	
+	// Apply lstm layer to the model
+	const input_lstm0 = lstm0.apply(input);
+	console.log("input_lstm0: ", input_lstm0.name);
+	
+	console.log("Input - LSTM0: ", JSON.stringify(input_lstm0.shape)); 
+	// Input - LSTM0: [m=batch_size=129, n_y=units=num_of_lstm_outpus=1] 
+	
+	// This size is the shape of y_total_forward_pass per timestep
+
+	// y_hat<t>_(n_y, batch_size)
+
+	// -----------------------
+	
+	// LSTM layer 1
+	const lstm1 = tf.layers.lstm({
+		recurrentActivation: 'hardSigmoid',
+		units: n_a,
+    
+		// receive a prediction per timestep
+		returnSequences: true,
+
+		// do not return the a and c matricies
+		returnState: false,
+		
+		kernelInitializer: 'heNormal',
+
+		// batchSize = batch_size gives Input - LSTM:  [129,129]
+		batchSize: batch_size,
+		
+		//inputShape: [timesteps, num_of_features],
+		
+		stateful: false,
+		// If stateful=true 
+		
+		activation: 'tanh',
+		trainable: true,
+		dropout: 0.2
+	});
+	
+	// Apply lstm layer to the model
+	const input_lstm0_lstm1 = lstm1.apply(input_lstm0);
+	console.log("input_lstm0_lstm1: ", input_lstm0_lstm1.name);
+	
+	console.log("Input - LSTM0 - LSTM1: ", JSON.stringify(input_lstm0_lstm1.shape)); 
+	// Input - LSTM: [m=batch_size=129, n_y=units=num_of_lstm_outpus=1] 
+	
+	// This size is the shape of y_total_forward_pass per timestep
+
+	// y_hat<t>_(n_y, batch_size)
+
+	// -----------------------
+	
+	// LSTM layer 2
+	const lstm2 = tf.layers.lstm({
+		recurrentActivation: 'hardSigmoid',
+		units: n_a,
+    
+		// receive a prediction per timestep
+		returnSequences: false,
+
+		// do not return the a and c matricies
+		returnState: false,
+		
+		kernelInitializer: 'heNormal',
+
+		// batchSize = batch_size gives Input - LSTM:  [129,129]
+		batchSize: batch_size,
+		inputShape: [timesteps, num_of_features],
+		stateful: false,
+		// If stateful=true it gives Error: Input 0 is incompatible with layer lstm_LSTM1: expected shape=168,,1, found shape=32,3,1.
+		activation: 'tanh',
+		trainable: true,
+		dropout: 0.2
+	});
+	
+	// Apply lstm layer to the model
+	const input_lstm0_lstm1_lstm2 = lstm2.apply(input_lstm0_lstm1);
+	console.log("input_lstm0_lstm1_lstm2: ", input_lstm0_lstm1_lstm2.name);
+	
+	console.log("Input - LSTM0 - LSTM1 - LSTM2: ", JSON.stringify(input_lstm0_lstm1_lstm2.shape)); 
+	// Input - LSTM: [m=batch_size=129, n_y=units=num_of_lstm_outpus=1] 
+	
+	// This size is the shape of y_total_forward_pass per timestep
+
+	// y_hat<t>_(n_y, batch_size)
+
+	// -----------------------
+	
+	// Dense layer
+	const denseLayer2 = tf.layers.dense({units: num_of_outputs, activation: "softmax"});
+	console.log("denseLayer2: ", denseLayer2.name);
+	
+	// Apply dense layer to the model
+	const input_lstm0_lstm1_lstm2_dense = denseLayer2.apply(input_lstm0_lstm1_lstm2);
+	console.log("Input - LSTM0 - LSTM1 - LSTM2 - Dense: ", JSON.stringify(input_lstm0_lstm1_lstm2_dense.shape)); 
+	// [batch_size=129, num_of_outputs=26]
+	
+	// this size is the shape of y_dense per timestep
+	
+	// so there are 129 batches and 26 results per batch
+	
+	// so there will be 129 results, where each result has 26 values
+	
+	// -----------------------
+	
+	lstmModel = await tf.model({inputs: input, outputs: input_lstm0_lstm1_lstm2_dense});
+	console.log('lstmModel: ', lstmModel);
+
+	// -----------------------
+	
+	return lstmModel;
+}
+
+// -----------------------------------------------
+
+	
+// -----------------------------------------------
+// [1f] model outline: case 6
+// -----------------------------------------------
+async function modelDefinition4_prediction_per_timestep() {
+
+	// -----------------------
+	
+	var n_a = 58; // 72; // 120; 	// 96; // timesteps;  // 1
+	
+	// -----------------------
+	
+	// Input layer
+	const input = tf.input({batchShape: [batch_size, timesteps, num_of_features]});
+	console.log("input: ", input.name);
+	
+	console.log("Input: ", JSON.stringify(input.shape));
+	// [129=batch_size, 1=timesteps, 1=num_of_features]
+
+	// -----------------------
+
+	// LSTM layer 0
+	const lstm0 = tf.layers.lstm({
+		recurrentActivation: 'hardSigmoid',
+		units: n_a,
+    
+		// receive a prediction per datapoint
+		returnSequences: true,
+
+		// do not return the a and c matricies
+		returnState: false
+		,
+		kernelInitializer: 'heNormal',
+
+		// batchSize = batch_size gives Input - LSTM:  [129,129]
+		batchSize: batch_size,
+		inputShape: [timesteps, num_of_features],
+		stateful: false,
+		// If stateful=true it gives Error: Input 0 is incompatible with layer lstm_LSTM1: expected shape=168,,1, found shape=32,3,1.
+		activation: 'tanh',
+		trainable: true,
+		dropout: 0.2
+	});
+	
+	// Apply lstm layer to the model
+	const input_lstm0 = lstm0.apply(input);
+	console.log("input_lstm0: ", input_lstm0.name);
+	
+	console.log("Input - LSTM0: ", JSON.stringify(input_lstm0.shape)); 
+	// Input - LSTM0: [m=batch_size=129, n_y=units=num_of_lstm_outpus=1] 
+	
+	// This size is the shape of y_total_forward_pass per timestep
+
+	// y_hat<t>_(n_y, batch_size)
+
+	// -----------------------
+	
+	// LSTM layer 1
+	const lstm1 = tf.layers.lstm({
+		recurrentActivation: 'hardSigmoid',
+		units: n_a,
+    
+		// receive a prediction per timestep
+		returnSequences: true,
+
+		// do not return the a and c matricies
+		returnState: false,
+		
+		kernelInitializer: 'heNormal',
+
+		// batchSize = batch_size gives Input - LSTM:  [129,129]
+		batchSize: batch_size,
+		
+		//inputShape: [timesteps, num_of_features],
+		
+		stateful: false,
+		// If stateful=true 
+		
+		activation: 'tanh',
+		trainable: true,
+		dropout: 0.2
+	});
+	
+	// Apply lstm layer to the model
+	const input_lstm0_lstm1 = lstm1.apply(input_lstm0);
+	console.log("input_lstm0_lstm1: ", input_lstm0_lstm1.name);
+	
+	console.log("Input - LSTM0 - LSTM1: ", JSON.stringify(input_lstm0_lstm1.shape)); 
+	// Input - LSTM: [m=batch_size=129, n_y=units=num_of_lstm_outpus=1] 
+	
+	// This size is the shape of y_total_forward_pass per timestep
+
+	// y_hat<t>_(n_y, batch_size)
+
+	// -----------------------
+	
+	// LSTM layer 2
+	const lstm2 = tf.layers.lstm({
+		recurrentActivation: 'hardSigmoid',
+		units: n_a,
+    
+		// receive a prediction per timestep
+		returnSequences: true,
+
+		// do not return the a and c matricies
+		returnState: false,
+		
+		kernelInitializer: 'heNormal',
+
+		// batchSize = batch_size gives Input - LSTM:  [129,129]
+		batchSize: batch_size,
+		inputShape: [timesteps, num_of_features],
+		stateful: false,
+		// If stateful=true it gives Error: Input 0 is incompatible with layer lstm_LSTM1: expected shape=168,,1, found shape=32,3,1.
+		activation: 'tanh',
+		trainable: true,
+		dropout: 0.2
+	});
+	
+	// Apply lstm layer to the model
+	const input_lstm0_lstm1_lstm2 = lstm2.apply(input_lstm0_lstm1);
+	console.log("input_lstm0_lstm1_lstm2: ", input_lstm0_lstm1_lstm2.name);
+	
+	console.log("Input - LSTM0 - LSTM1 - LSTM2: ", JSON.stringify(input_lstm0_lstm1_lstm2.shape)); 
+	// Input - LSTM: [m=batch_size=129, n_y=units=num_of_lstm_outpus=1] 
+	
+	// This size is the shape of y_total_forward_pass per timestep
+
+	// y_hat<t>_(n_y, batch_size)
+
+	// -----------------------
+	
+	// LSTM layer 3
+	const lstm3 = tf.layers.lstm({
+		recurrentActivation: 'hardSigmoid',
+		units: n_a,
+    
+		// receive a prediction per timestep
+		returnSequences: false,
+
+		// do not return the a and c matricies
+		returnState: false,
+		
+		kernelInitializer: 'heNormal',
+
+		// batchSize = batch_size gives Input - LSTM:  [129,129]
+		batchSize: batch_size,
+		
+		//inputShape: [timesteps, num_of_features],
+		
+		stateful: false,
+		// If stateful=true 
+		
+		activation: 'tanh',
+		trainable: true,
+		dropout: 0.2
+	});
+	
+	// Apply lstm layer to the model
+	const input_lstm0_lstm1_lstm2_lstm3 = lstm3.apply(input_lstm0_lstm1_lstm2);
+	console.log("input_lstm0_lstm1_lstm2_lstm3: ", input_lstm0_lstm1_lstm2_lstm3.name);
+	
+	console.log("Input - LSTM0 - LSTM1 - LSTM2 - LSTM3: ", JSON.stringify(input_lstm0_lstm1_lstm2_lstm3.shape)); 
+	// Input - LSTM: [m=batch_size=129, n_y=units=num_of_lstm_outpus=1] 
+	
+	// This size is the shape of y_total_forward_pass per timestep
+
+	// y_hat<t>_(n_y, batch_size)
+
+	// -----------------------
+	
+	// Dense layer
+	const denseLayer2 = tf.layers.dense({units: num_of_outputs, activation: "softmax"});
+	console.log("denseLayer2: ", denseLayer2.name);
+	
+	// Apply dense layer to the model
+	const input_lstm0_lstm1_lstm2_lstm3_dense = denseLayer2.apply(input_lstm0_lstm1_lstm2_lstm3);
+	console.log("Input - LSTM0 - LSTM1 - LSTM2 - LSTM3 - Dense: ", JSON.stringify(input_lstm0_lstm1_lstm2_lstm3_dense.shape)); 
+	// [batch_size=129, num_of_outputs=26]
+	
+	// this size is the shape of y_dense per timestep
+	
+	// so there are 129 batches and 26 results per batch
+	
+	// so there will be 129 results, where each result has 26 values
+	
+	// -----------------------
+	
+	lstmModel = await tf.model({inputs: input, outputs: input_lstm0_lstm1_lstm2_lstm3_dense});
+	console.log('lstmModel: ', lstmModel);
+
+	// -----------------------
+	
+	return lstmModel;
+}
+
+// -----------------------------------------------
+
+	
+
+
+
+// BIDIRECTIONAL
+	
+// -----------------------------------------------
+// [1d] model outline: case 4 - bidirectional
+// -----------------------------------------------
+async function modelDefinition5_prediction_per_timestep() {
+
+	// Input layer
+	const input = tf.input({batchShape: [batch_size, timesteps, num_of_features]});
+	console.log("input: ", input.name);
+	
+	console.log("Input: ", JSON.stringify(input.shape));
+	// [129=batch_size, 1=timesteps, 1=num_of_features]
+
+	// -----------------------
+
+	// LSTM layer
+	var n_a = 2*timesteps; // timesteps;  // 1
+	
+	const lstm = tf.layers.lstm({
+		recurrentActivation: 'hardSigmoid',
+		units: n_a,
+    
+		// receive a prediction per timestep
+		returnSequences: false,
+
+		// do not return the a and c matricies
+		returnState: false,
+		kernelInitializer: 'heNormal',
+
+		// batchSize = batch_size gives Input - LSTM:  [129,129]
+		batchSize: batch_size,
+		inputShape: [timesteps, num_of_features],
+		stateful: false,
+		// If stateful=true it gives Error: Input 0 is incompatible with layer lstm_LSTM1: expected shape=168,,1, found shape=32,3,1.
+		activation: 'tanh',
+		trainable: true,
+		dropout: 0.2
+	});
+
+	// Bidirectional layer
+	const bidirectionalLstm1 = tf.layers.bidirectional({ 
+		layer: lstm,
+		inputShape: [timesteps, num_of_features]
+	});
+	
+	// Apply lstm layer to the model
+	const input_bidirectionalLstm1 = bidirectionalLstm1.apply(input);
+	console.log("input_bidirectionalLstm1: ", input_bidirectionalLstm1.name);
+	
+	console.log("Input - Bidirectional LSTM: ", JSON.stringify(input_bidirectionalLstm1.shape)); 
+	// Input - LSTM: [m=batch_size=129, n_y=units=num_of_lstm_outpus=1] 
+	
+	// This size is the shape of y_total_forward_pass per timestep
+
+	// y_hat<t>_(n_y, batch_size)
+		
+	// -----------------------
+	
+	// Dense layer
+	// const denseLayer1 = tf.layers.dense({units: num_of_outputs, inputShape: [timesteps, num_of_features]});
+	const denseLayer1 = tf.layers.dense({units: 40, activation: "relu"});
+	console.log("denseLayer1: ", denseLayer1.name);
+
+	// Apply dense layer to the model
+	const input_lstm_dense = denseLayer1.apply(input_bidirectionalLstm1);
+	console.log("Input - Bidirectional LSTM - Dense: ", JSON.stringify(input_lstm_dense.shape));
+	// Input - LSTM - Dense:  [129=batch_size, dense_layer_output=units=1] 
+	
+	// this size is the shape of y_dense per timestep
+	
+	// -----------------------
+	
+	// Dense layer
+	const denseLayer2 = tf.layers.dense({units: num_of_outputs, activation: "softmax"});
+	console.log("denseLayer2: ", denseLayer2.name);
+	
+	// Apply dense layer to the model
+	const input_lstm_dense_dense = denseLayer2.apply(input_lstm_dense);
+	console.log("Input - Bidirectional LSTM - Dense - Dense: ", JSON.stringify(input_lstm_dense_dense.shape)); 
+	// [batch_size=129, num_of_outputs=26]
+	
+	// this size is the shape of y_dense per timestep
+	
+	// so there are 129 batches and 26 results per batch
+	
+	// so there will be 129 results, where each result has 26 values
+	
+	// -----------------------
+	
+	lstmModel = await tf.model({inputs: input, outputs: input_lstm_dense_dense});
+	console.log('lstmModel: ', lstmModel);
+
+	// -----------------------
+	
+	return lstmModel;
+}
+
+// -----------------------------------------------
+
+
+
+
+
+// -----------------------------------------------
+// [1e] model outline: case 5 - bidirectional with lstm
+// -----------------------------------------------
+async function modelDefinition6_prediction_per_timestep() {
+
+	var n_a = 2*timesteps; // timesteps;  // 1
+
+	// -----------------------
+	
+	// Input layer
+	const input = tf.input({batchShape: [batch_size, timesteps, num_of_features]});
+	console.log("input: ", input.name);
+	
+	console.log("Input: ", JSON.stringify(input.shape));
+	// [129=batch_size, 1=timesteps, 1=num_of_features]
+
+	// -----------------------
+
+	// LSTM layer
+	const lstm0 = tf.layers.lstm({
+		recurrentActivation: 'hardSigmoid',
+		units: n_a,
+    
+		// receive a prediction per timestep
+		returnSequences: true,
+
+		// do not return the a and c matricies
+		returnState: false,
+		
+		kernelInitializer: 'heNormal',
+
+		// batchSize = batch_size gives Input - LSTM:  [129,129]
+		batchSize: batch_size,
+		inputShape: [timesteps, num_of_features],
+		stateful: false,
+		// If stateful=true it gives Error: Input 0 is incompatible with layer lstm_LSTM1: expected shape=168,,1, found shape=32,3,1.
+		activation: 'tanh',
+		trainable: true,
+		dropout: 0.2
+	});
+
+	// Bidirectional layer
+	const bidirectionalLstm0 = tf.layers.bidirectional({ 
+		layer: lstm0,
+		inputShape: [timesteps, num_of_features]
+	});
+	
+	// Apply lstm layer to the model
+	const input_bidirectionalLstm0 = bidirectionalLstm0.apply(input);
+	console.log("input_bidirectionalLstm0: ", input_bidirectionalLstm0.name);
+	
+	console.log("Input - Bidirectional LSTM0: ", JSON.stringify(input_bidirectionalLstm0.shape)); 
+	// Input - LSTM: [m=batch_size=129, n_y=units=num_of_lstm_outpus=1] 
+	
+	// This size is the shape of y_total_forward_pass per timestep
+
+	// y_hat<t>_(n_y, batch_size)
+		
+	// -----------------------
+	
+	// LSTM layer 1
+	const lstm1 = tf.layers.lstm({
+		recurrentActivation: 'hardSigmoid',
+		units: n_a,
+    
+		// receive a prediction per timestep
+		returnSequences: false,
+
+		// do not return the a and c matricies
+		returnState: false,
+		
+		kernelInitializer: 'heNormal',
+
+		// batchSize = batch_size gives Input - LSTM:  [129,129]
+		batchSize: batch_size,
+		inputShape: [timesteps, num_of_features],
+		stateful: false,
+		// If stateful=true it gives Error: Input 0 is incompatible with layer lstm_LSTM1: expected shape=168,,1, found shape=32,3,1.
+		activation: 'tanh',
+		trainable: true,
+		dropout: 0.2
+	});
+
+	// Bidirectional layer
+	const bidirectionalLstm1 = tf.layers.bidirectional({ 
+		layer: lstm1,
+		inputShape: [timesteps, num_of_features]
+	});
+	
+	// Apply lstm layer to the model
+	const input_bidirectionalLstm0_bidirectionalLstm1 = bidirectionalLstm1.apply(input_bidirectionalLstm0);
+	console.log("input_bidirectionalLstm0_bidirectionalLstm1: ", input_bidirectionalLstm0_bidirectionalLstm1.name);
+	
+	console.log("Input - Bidirectional LSTM0 - Bidirectional LSTM1: ", JSON.stringify(input_bidirectionalLstm0_bidirectionalLstm1.shape)); 
+	// Input - LSTM: [m=batch_size=129, n_y=units=num_of_lstm_outpus=1] 
+	
+	// This size is the shape of y_total_forward_pass per timestep
+
+	// y_hat<t>_(n_y, batch_size)
+
+	// -----------------------
+	
+	// Dense layer
+	// const denseLayer1 = tf.layers.dense({units: num_of_outputs, inputShape: [timesteps, num_of_features]});
+	const denseLayer1 = tf.layers.dense({units: num_of_outputs, activation: "relu"});
+	console.log("denseLayer1: ", denseLayer1.name);
+
+	// Apply dense layer to the model
+	const input_bidirectionalLstm0_bidirectionalLstm1_dense = denseLayer1.apply(input_bidirectionalLstm0_bidirectionalLstm1);
+	console.log("Input - Bidirectional LSTM0 - Bidirectional LSTM1 - Dense: ", JSON.stringify(input_bidirectionalLstm0_bidirectionalLstm1.shape));
+	// Input - LSTM - Dense:  [129=batch_size, dense_layer_output=units=1] 
+	
+	// this size is the shape of y_dense per timestep
+	
+	// -----------------------
+	
+	lstmModel = await tf.model({inputs: input, outputs: input_bidirectionalLstm0_bidirectionalLstm1_dense});
+	console.log('lstmModel: ', lstmModel);
+
+	// -----------------------
+	
+	return lstmModel;
+}
+
+// -----------------------------------------------
+
+
+
+
+
+	
+	
+	
+
+// -----------------------------------------------
+// [2] compile_train_predict model
+// -----------------------------------------------
+async function compile_train_predict_lstm(xs_train_tf, ys_train_tf, xs_test_js, lstmModel) {
+	
+	await lstmModel.compile({optimizer: tf.train.adam(), loss: 'categoricalCrossentropy', metrics: ['accuracy']});
+
+	epochs = document.getElementById("epochs").value;
+	
+	const history = await lstmModel.fit(xs_train_tf, ys_train_tf, { 
+				batchSize: batch_size, 
+				epochs: epochs, 
+				callbacks: { onEpochEnd: async (epoch, logs) => { 
+					if (epoch % 50 == 0) {
+						document.getElementById("progress_bar").style.display = "block";
+						document.getElementById("progress_bar").value = epoch/epochs*100;
+						console.log('epoch: ', epoch);
+						// console.log('logs: ', logs);
+					} 
+				}}
+			});
+	console.log('history: ', history);
+	
+	document.getElementById("progress_bar").style.display = "none";
+	
+	// -----------------------------------------------
+	// Plot accuracy
+	// -----------------------------------------------
+	var accuracy = await history.history.acc.map((val, ind) => { return Number(val); });
+	console.log('accuracy: ', accuracy);
+	
+	var loss = await history.history.loss.map((val, ind) => { return Number(val); });
+	console.log('loss: ', loss);
+	
+	var epochs_plot = await Array.from({length: accuracy.length}, (val, ind) => { return ind; });
+	
+	// https://plotly.com/javascript/line-charts/
+	var title_text = "Model results: loss, accuracy";
+	var x_text_trace1and2 = "Epochs";
+	var y_text_trace1and2 = "Accuracy or loss";
+	var trace1 = {x: epochs_plot, y: accuracy, mode: 'lines+markers', type: 'line', name: 'Accuracy'};
+	var trace2 = {x: epochs_plot, y: loss, mode: 'lines+markers', type: 'line', name: 'Loss'};
+	var data = [trace1, trace2];
+	var layout = {grid: {rows: 1, columns: 1, pattern: 'independent'}, title: title_text, xaxis: {title: x_text_trace1and2}, yaxis: {title: y_text_trace1and2}};
+	Plotly.newPlot('data_display', data, layout);
+
+
+	
+	// ------------------------
+	console.log('---------------------TEST MODEL ---------------------: ');
+	// ------------------------
+
+	var letters = Object.keys(obj);
+	var numbers = Object.values(obj);
+	const obj_numtolet = Object.fromEntries(numbers.map((key, index) => [key, letters[index]]));
+
+	// ------------------------
+	
+	// Test data: correct
+	console.log('xs_test_js: ', xs_test_js);
+	// output: xs_test_js a JS array [ 337, 1, 1 ]
+
+	shap = await shape(xs_test_js);  
+	console.log('Shape xs_test_js: ', shap);  // [ 4, 25, 1 ]
+	
+	// ------------------------
+	
+	for (var i=0; i<xs_test_js.length; i++) {
+
+		console.log('--------------------- TEST MODEL: ', i, '---------------------: ');
+		
+		// ------------------------
+		
+		// Repeat entries to obtain a 3d array that is the same size as xs_train
+		// input: xs_test_js is a JS array [ batch_size, timesteps, num_of_features=1 ]
+		var xs_test_js_batch = await create_correct_batchSize_for_xsTest(xs_test_js[i], batch_size);
+		// console.log('xs_test_js_batch: ', xs_test_js_batch);
+		// output: xs_test_js is a JS array [ 337, 1, 1 ]
+	
+		shap = await shape(xs_test_js_batch);  
+		console.log('Shape xs_test_js_batch: ', shap);
+		
+		// ------------------------
+
+		console.log('TEST MODEL: Output TEST information: ');
+		
+		// Numerical test sequence: look at the first batch value
+		
+		// test_input_sequence is an array with index from 0 to 24.
+		// The sequence has 25 values.
+		// The values are from 1 to 26. - so it is on the same scale as obj
+		var test_input_sequence = await flat_arr(xs_test_js_batch[0]);
+		console.log('test_input_sequence: ', test_input_sequence);
+
+		// Print the 26the number in the sequence: this is the value that needs to be predicted.
+		var sequence_value26_to_predict = test_input_sequence.at(test_input_sequence.length-1) + 1;
+		console.log('sequence_value26_to_predict: ', sequence_value26_to_predict);
+		
+		// Character to predict: print the 26th character
+		var character_to_predict = letters[Number(sequence_value26_to_predict)];
+		console.log('character_to_predict: ', character_to_predict);
+		// correct
+
+		// -------------------------------
+
+		console.log('TEST MODEL: Predict TEST information: ');
+		// Evaluation of prediction with respect to the model
+		var result = lstmModel.predict( tf.tensor(xs_test_js_batch) );
+		// console.log('result : ', result);
+		
+		const resultData = await result.data(); // returns an TypedArray [Float32Array]
+		// console.log('resultData : ', resultData);
+		// OR
+		// const resultData1 = result.dataSync();  // returns an TypedArray [Float32Array]
+		// console.log('resultData1 : ', resultData1);
+		// Gives an array that is (num_of_outputs=26 * batch_size=337 = 8762)
+
+		// Convert the TypedArray into a normal array
+		var normalArray = await Array.from(resultData);
+		// console.log('normalArray: ', normalArray);
+
+		// -------------------------------
+
+		// Obtain prediction output from model
+
+		// Way 0: Select the maximum probability across batches
+		// const model_predictions = await result.data();
+		// console.log('model_predictions : ', model_predictions);
+		// OR
+		// Get index of maximum softmax probability. index is from 0 to [batch_size*num_of_outputs=25].
+		const index_way0 = result.as1D().argMax().dataSync()[0];  // returns an integer
+		console.log('index_way0 : ', index_way0);
+		
+		// Get maximum softmax probability 
+		const maxprob_way0 = normalArray[index_way0];
+		console.log('maxprob_way0 : ', maxprob_way0);
+
+		// Find the equivalent index value from 0 to num_of_outputs=25.
+		var c = 0;
+		var index_way0_0to25;
+		normalArray.map((val, ind) => {
+			if (ind == index_way0) { index_way0_0to25 = c; }
+			    if (ind % num_of_outputs == 0) {
+				    //start over
+				    c = 0;
+			    } else {
+				    c = c + 1;
+			    }
+		});
+		console.log('index_way0_0to25 : ', index_way0_0to25);
+		// correct, from 0 to 25 it counts, and at 26 c=0 and repeats
+		// so the values are from 0 to 25
+
+		// Make index_way0_0to25 from 1 to 26, to match the key of obj
+		var index_way0_1to26 = index_way0_0to25 + 1;
+		console.log('index_way0_1to26 : ', index_way0_1to26);
+		
+		// obj is a dictionary with index from 1=A to 26=Z
+		const letter_prediction_way0 = obj_numtolet[index_way0_1to26];
+		console.log('letter_prediction_way0 : ', letter_prediction_way0);
+		// correct
+		
+		// ---------------
+		
+		// Way 1: Reduce to num_of_outputs - sum across batches and average
+		var probability = await zeros([num_of_outputs]);
+		const loops = normalArray.length/probability.length;  // should be batch_size
+		// console.log('loops : ', loops);
+		
+		var temp = [];
+		var probability1 = normalArray.map((val, ind) => {
+		    if (ind % probability.length == 0) {
+		        // start over
+		        if (temp.length == probability.length) {
+		            probability = probability.map((val, ind) => { return val + temp.at(ind); });
+		          // console.log("ind: ", ind)
+		          // console.log("probability: ", probability)
+		        }
+		        temp = [val];
+		    } else {
+		        temp.push(val);
+		    }
+		})
+		probability = probability.map((val, ind) => { return (val + temp.at(ind))/loops; });
+		console.log('Character probability : ', probability);
+		// probability is an array with index from 0 to 25
+
+		// -------------------------------
+
+		// index_way1 is a value from 0 to 25
+		var probability_sorted = probability.sort();
+		console.log('probability_sorted : ', probability_sorted);
+
+		var maxprob_way1 = probability_sorted.slice(probability.length-1)[0];
+		console.log('maxprob_way1 : ', maxprob_way1);
+		
+		// -------------------------------
+		
+		var maxprob_index_way1 = probability.map((val, ind) => {
+			if (val == maxprob_way1) {
+				return ind;
+			} else { return ""; }
+		});
+		const NonEmptyVals_toKeep = (x) => x.length != 0;
+		maxprob_index_way1 = maxprob_index_way1.filter(NonEmptyVals_toKeep)[0];
+		console.log('maxprob_index_way1 : ', maxprob_index_way1);
+
+		// -------------------------------
+
+		// Make index_way1_0to25 from 1 to 26, to match the key of obj
+		var index_way1_1to26 = maxprob_index_way1 + 1;
+		console.log('index_way1_1to26 : ', index_way1_1to26);
+
+		// Predicted character
+		// obj is a dictionary with index from 1=A to 26=Z
+		const letter_prediction_way1 = obj_numtolet[index_way1_1to26];
+		console.log('letter_prediction_way1 : ', letter_prediction_way1);
+		
+		// -------------------------------
+	}
+	
+	
+}
+
+
+
+
+
+// -----------------------------------------------
+// SUBFUNCTIONS
+// -----------------------------------------------
+async function recur_func(arr) {
+	if (arr != undefined) {
+		return [arr[0], arr.length];
+	} else {
+		return arr;
+	}
+}
+	
+async function shape(arr) {
+	var out = await recur_func(arr);
+	var shap = [out[1]];
+	var c = 0; // typically work with 4D arrays or less
+	while (out != undefined && c < 4) {
+		out = await recur_func(out[0]);
+		if (out != undefined) {
+			shap.push(out[1]);
+		}
+		c = c + 1;
+	}
+
+	if (shap.length > 1) {
+		shap = shap.slice(0, shap.length-1);
+	}
+	
+	return shap;
+}
+
+// -----------------------------------------------
+
+async function zeros(dims) {
+
+	// dims: [desired_0th_dim, desired_1st_dim, desired_2nd_dim]
+
+	var out = [];
+	
+	if (dims.length == 1) {
+		var desired_0th_dim = dims.at(0);
+		
+		out = Array.from({length: desired_0th_dim}, (val, ind) => { return 0; }); 
+
+	} else if (dims.length == 2) {
+		var desired_0th_dim = dims.at(0);
+		var desired_1st_dim = dims.at(1);
+		
+		for (var i=0; i<desired_0th_dim; i++) {
+			var arr = Array.from({length: desired_1st_dim}, (val, ind) => { return 0; }); 
+			out.push(arr);
+		}
+
+	} else if (dims.length == 3) {
+		var desired_0th_dim = dims.at(0);
+		var desired_1st_dim = dims.at(1);
+		var desired_2nd_dim = dims.at(2);
+		
+		for (var i=0; i<desired_0th_dim; i++) {
+			temp = [];
+			for (var j=0; j<desired_1st_dim; j++) {
+				var arr = Array.from({length: desired_2nd_dim}, (val, ind) => { return 0; }); 
+				temp.push(arr);
+			}
+			out.push(temp);
+		}
+		
+	} else {
+		console.log('Enter an array of length 1, 2, or 3. (ie: [desired_0th_dim, desired_1st_dim, desired_2nd_dim])')
+	}
+	
+	return out;
+}
+	
+// -----------------------------------------------
+			
+async function exchange_3d_dimensions(arr_3d, output_dims_index) {
+
+	// dims: [2,1,2] implying the output dimension size
+	// OR
+	// output_dims_index: [0,2,1] implying how to switch the dimension index of arr_3d, this is technically more precise because two dimension indexes could have the same size. So one is specifying exactly which dimension index to use for a particular dimension.
+
+	// Way 0
+	// dims notation [2,2,1] => [2,1,2] 
+	
+	// Way 1
+	// need to say which dimension should switch with, which dimension
+	// output_dims_index specifies the [dimension index] of the desired output array 
+	// [2,2,1] = [org_0th_dim, org_1st_dim, org_2nd_dim] => [2,1,2] = [org_0th_dim, org_2nd_dim, org_1st_dim] = [0,2,1] 
+
+	
+	// [0] List the original array location_values and values
+	var org_0th_dim = [];
+	var org_1st_dim = [];
+	var org_2nd_dim = [];
+	var val = [];
+
+	for (var i=0; i<arr_3d.length; i++) {
+		for (var j=0; j<arr_3d[0].length; j++) {
+			for (var k=0; k<arr_3d[0][0].length; k++) {
+			       org_0th_dim.push(i);
+			       org_1st_dim.push(j);
+			       org_2nd_dim.push(k);
+			       val.push(arr_3d[i][j][k])
+			}
+		}
+	}
+	// console.log('org_0th_dim: ', org_0th_dim);
+	// console.log('org_1st_dim: ', org_1st_dim);
+	// console.log('org_2nd_dim: ', org_2nd_dim);
+	// console.log('val: ', val);
+	
+	// Need to transform output_dims_index, from index to dimensions
+	var dims_of_org_arr = [arr_3d.length, arr_3d[0].length, arr_3d[0][0].length];
+	var dims = output_dims_index.map((val, i) => { return dims_of_org_arr.at(val); });
+	
+	
+	// [1] Make the new shape array, filled with zeros
+	var desired_3d = await zeros(dims);
+
+	// Exchange notation for desired output index dimensions
+	var all = [org_0th_dim, org_1st_dim, org_2nd_dim];
+	var all_switched = output_dims_index.map((val, i) => { return all.at(val); });
+	org_0th_dim = all_switched.at(0);
+	org_1st_dim = all_switched.at(1);
+	org_2nd_dim = all_switched.at(2);
+
+	
+	// [2] Fill in output shaped 3d array
+	var desired_0th_dim = dims.at(0);
+	var desired_1st_dim = dims.at(1);
+	var desired_2nd_dim = dims.at(2);
+	
+	for (var i=0; i<desired_0th_dim; i++) {
+		for (var j=0; j<desired_1st_dim; j++) {
+			for (var k=0; k<desired_2nd_dim; k++) {
+				
+				// cycle over the index of a for every i,j,k value
+			       for (var ind=0; ind<org_0th_dim.length; ind++) {
+				       if (org_0th_dim.at(ind) == i && org_1st_dim.at(ind) == j && org_2nd_dim.at(ind) == k) {
+						desired_3d[i][j][k] = val.at(ind);
+				       }
+			       }
+			}
+		}
+	}
+			       
+	return desired_3d;       
+}
+  
+// -----------------------------------------------
+  
+async function flat_arr(arr) {
+
+	var str = JSON.stringify(arr);
+	
+	const regex = /\b\d+\.\d+\b|\b\d+\b/g;
+	var matches = str.match(regex);
+	// console.log('matches: ', matches);
+
+	var floatArray = matches.map((val, ind) => { return Number(val); });
+	
+	return floatArray;
+}
+
+// -----------------------------------------------
+
+async function create_correct_batchSize_for_xsTest(xs_test_3d_jsArr, batch_size) {
+
+	// ------------------------
+	
+	// xs_test_3d_jsArr is a JS array [ 1, 11, 1 ]
+	
+	var xs_test_flat = await flat_arr(xs_test_3d_jsArr);
+	// console.log('xs_test_flat: ', xs_test_flat);
+
+	// ------------------------
+
+	var xs_test_1d_arr = xs_test_flat;
+
+	var xs_test_2d_arr = xs_test_1d_arr.map((val, ind) => { return [val]; });
+	// console.log('xs_test_2d_arr: ', xs_test_2d_arr); // [timesteps=11, num_of_features=1]
+
+	// shap = await shape(xs_test_2d_arr);  
+	// console.log('Shape xs_test_2d_arr: ', shap);
+
+	// -----------------------------
+	
+	// Repeat xs_test batch_size times
+	xs_test_3d_arr = [];
+	for (var i=0; i<batch_size; i++) {
+		xs_test_3d_arr.push(xs_test_2d_arr)
+	}
+	// console.log('xs_test_3d_arr: ', xs_test_3d_arr);  // [batch_size=19, timesteps=11, num_of_features=1]
+
+	// shap = await shape(xs_test_3d_arr);  
+	// console.log('Shape xs_test_3d_arr: ', shap);
+	
+	return xs_test_3d_arr;
+}
+
+// -----------------------------------------------
+  
+</script>
+</body>
+</html>
